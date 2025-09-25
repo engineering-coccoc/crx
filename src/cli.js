@@ -43,6 +43,9 @@ program
     "-p, --private-key <file>",
     "relative path to private key [key.pem], defaults to [directory/../key.pem]")
   .option(
+    "-p-ecdsa, --private-key-ecdsa <file>",
+    "relative path to ecdsa private key [key_ecdsa.pem]")
+  .option(
     "-b, --max-buffer <total>",
     "max amount of memory allowed to generate the crx, in byte"
   )
@@ -91,6 +94,9 @@ function pack(dir, program) {
   var keyPath = program.privateKey
     ? resolve(cwd, program.privateKey)
     : join(input, "..", "key.pem");
+  var keyEcdsaPath = program.privateKeyEcdsa
+    ? resolve(cwd, program.privateKeyEcdsa)
+    : "";
   var output;
 
   if (program.output) {
@@ -133,6 +139,14 @@ function pack(dir, program) {
     })
     .then(function(key) {
       crx.privateKey = key;
+    })
+    .then(function() {
+      if (keyEcdsaPath) {
+        return readFile(keyEcdsaPath);
+      }
+    })
+    .then(function(key) {
+      crx.privateKeyEcdsa = key;
     })
     .then(function() {
       crx

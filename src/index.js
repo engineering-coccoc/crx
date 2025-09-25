@@ -14,6 +14,8 @@ const DEFAULTS = {
   rootDirectory: "",
   publicKey: null,
   privateKey: null,
+  publicKeyEcdsa: null,
+  privateKeyEcdsa: null,
   codebase: null,
   path: null,
   src: "**",
@@ -48,20 +50,23 @@ class ChromeExtension {
     var selfie = this;
     var packP = [
       this.generatePublicKey(),
+      this.generatePublicKeyEcdsa(),
       contentsBuffer || selfie.loadContents()
     ];
 
     return Promise.all(packP).then(function(outputs) {
       var publicKey = outputs[0];
-      var contents = outputs[1];
+      var publicKeyEcdsa = outputs[1];
+      var contents = outputs[2];
 
       selfie.publicKey = publicKey;
+      selfie.publicKeyEcdsa = publicKeyEcdsa;
 
       if (selfie.version === 2) {
         return crx2(selfie.privateKey, publicKey, contents);
       }
 
-      return crx3(selfie.privateKey, publicKey, contents);
+      return crx3(selfie.privateKey, publicKey, selfie.privateKeyEcdsa, publicKeyEcdsa, contents);
     });
   }
 
@@ -114,6 +119,39 @@ class ChromeExtension {
       var key = new RSA(privateKey);
 
       resolve(key.exportKey("pkcs8-public-der"));
+    });
+  }
+
+  /**
+   * Generates a public key ecdsa.
+   *
+   * @returns {Promise} Resolves to {Buffer} containing the public key
+   * @example
+   *
+   * crx.generatePublicKeyEcdsa(function(publicKey){
+   *   // do something with publicKey
+   * });
+   */
+  generatePublicKeyEcdsa () {
+    var privateKey = this.privateKeyEcdsa;
+
+    if (! privateKey) {
+      return null;
+    }
+
+    return new Promise(function(resolve) {
+      // Import the private key
+      const privateKeyObject = crypto.createPrivateKey({
+        key: privateKey,
+        format: "pem",
+      });
+
+      const publicKey = crypto.createPublicKey(privateKeyObject);
+
+      resolve(publicKey.export({
+        format: "der",
+        type: "spki",
+      }));
     });
   }
 

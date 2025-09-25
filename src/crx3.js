@@ -12,10 +12,12 @@ var crx = require("./crx3.js.pb");
  * @see {@link https://github.com/chromium/chromium/blob/master/components/crx_file/crx_creator.cc}
  * @param {Buffer} privateKey
  * @param {Buffer} publicKey
+ * @param {Buffer} privateKeyEcdsa
+ * @param {Buffer} publicKeyEcdsa
  * @param {Buffer} contents
  * @returns {Buffer}
  */
-module.exports = function generatePackage (privateKey, publicKey, contents) {
+module.exports = function generatePackage (privateKey, publicKey, privateKeyEcdsa, publicKeyEcdsa, contents) {
   var pb;
 
   pb = new PBf();
@@ -25,13 +27,21 @@ module.exports = function generatePackage (privateKey, publicKey, contents) {
   var signedHeaderData = pb.finish();
 
   pb = new PBf();
-  crx.CrxFileHeader.write({
+  var crxHeaderObject = {
     sha256_with_rsa: [{
       public_key: publicKey,
       signature : generateSignature(privateKey, signedHeaderData, contents)
     }],
     signed_header_data: signedHeaderData
-  }, pb);
+  };
+
+  if (privateKeyEcdsa) {
+    crxHeaderObject.sha256_with_ecdsa = [{
+      public_key: publicKeyEcdsa,
+      signature : generateSignature(privateKeyEcdsa, signedHeaderData, contents)
+    }];
+  }
+  crx.CrxFileHeader.write(crxHeaderObject, pb);
   var header = Buffer.from(pb.finish());
 
   var size =
