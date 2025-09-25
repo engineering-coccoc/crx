@@ -43,7 +43,7 @@ program
     "-p, --private-key <file>",
     "relative path to private key [key.pem], defaults to [directory/../key.pem]")
   .option(
-    "-p-ecdsa, --private-key-ecdsa <file>",
+    "--private-key-ecdsa <file>",
     "relative path to ecdsa private key [key_ecdsa.pem]")
   .option(
     "-b, --max-buffer <total>",
