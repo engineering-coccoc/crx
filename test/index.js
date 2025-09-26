@@ -86,6 +86,28 @@ TESTS.writeFile = function(t, opts){
   t.throws(() => crx.writeFile('/tmp/crx'));
 };
 
+TESTS.ignoreFiles = function(t, opts){
+  t.plan(1);
+
+  var crx = newCrx(Object.assign({
+    ignore: ['*.png']
+  }, opts));
+
+  crx.load().then(function(){
+    return crx.loadContents();
+  })
+    .then(function(packageData){
+      var entries = new Zip(packageData)
+        .getEntries()
+        .map(function(entry){
+          return entry.entryName;
+        })
+
+      t.deepEqual(entries, ['manifest.json']);
+    })
+    .catch(t.error.bind(t));
+};
+
 TESTS.loadContents = function(t, opts){
   t.plan(3);
 

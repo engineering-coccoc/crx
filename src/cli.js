@@ -50,6 +50,10 @@ program
     "max amount of memory allowed to generate the crx, in byte"
   )
   .option(
+    "-ig, --ignore-extension <extension>",
+    "Extension of file should be ignored"
+  )
+  .option(
     "-c, --crx-version [number]",
     "CRX format version, can be either 2 or 3, defaults to 3",
     parseInt
@@ -97,6 +101,9 @@ function pack(dir, program) {
   var keyEcdsaPath = program.privateKeyEcdsa
     ? resolve(cwd, program.privateKeyEcdsa)
     : "";
+  var ignoreExtension = program.ignoreExtension
+    ? ["*." + program.ignoreExtension]
+    : [];
   var output;
 
   if (program.output) {
@@ -122,7 +129,8 @@ function pack(dir, program) {
   var crx = new ChromeExtension({
     rootDirectory: input,
     maxBuffer: program.maxBuffer,
-    version: program.crxVersion || 3
+    version: program.crxVersion || 3,
+    ignore: ignoreExtension
   });
 
   readFile(keyPath)
